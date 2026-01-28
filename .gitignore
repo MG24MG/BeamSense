@@ -1,3 +1,4 @@
 *.zip
-Data/
+Data/*
 .DS_Store
+*.pdf
