@@ -16,7 +16,6 @@
 import numpy as np
 from textwrap import wrap
 
-
 def hex2dec(hex_value):
     hex2array = np.array(wrap(hex_value, 2))
     # hex2array_flipped = np.flip(hex2array)
