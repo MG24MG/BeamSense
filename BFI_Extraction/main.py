@@ -40,8 +40,8 @@ if __name__ == '__main__':
     parser.add_argument('bw', help='bandwidth of the capture')
     parser.add_argument('MAC', help='MAC of the Target Device')
     parser.add_argument('num_packet_to_process', help='num_packet_to_process')
-    parser.add_argument('saved_vmatrices', help='saved_vmatrices')
-    parser.add_argument('saved_angles', help='saved_angles')
+    # parser.add_argument('saved_vmatrices', help='saved_vmatrices')
+    # parser.add_argument('saved_angles', help='saved_angles')
 
     # Parse the command-line arguments
     args = parser.parse_args()
@@ -50,16 +50,16 @@ if __name__ == '__main__':
 
     # Set variables based on command-line arguments
     root_dir = args.root_dir #new
-    pcap_files = Path(root_dir).rglob("*.pcap") #new
-    file_name = args.file_name
+    pcapng_files = Path(root_dir).rglob("*.pcapng") #new
+    # file_name = args.file_name
     standard = args.standard
     mimo = args.mimo
     config = args.config
     bw = int(args.bw)
     MAC = args.MAC
     num_packet_to_process = int(args.num_packet_to_process)
-    saved_vmatrices = args.saved_vmatrices
-    saved_angles = args.saved_angles
+    #saved_vmatrices = args.saved_vmatrices
+    #saved_angles = args.saved_angles
 
     # Check if mu-mimo is selected for AX standard
     if mimo == "MU" and standard == "AX":
@@ -109,18 +109,18 @@ if __name__ == '__main__':
         else:
             print("input a valid bandwidth for IEEE 802.11ac")
 
-    for file in range(pcap_files):
+    for file in range(pcapng_files):
         # Read packets from the pcap file based on the selected standard
         if standard == "AX":
             packets = pyshark.FileCapture(
-                input_file=file_name,
+                input_file=file,
                 display_filter='wlan.he.mimo.feedback_type==SU && wlan.addr==%s' % (MAC),
                 use_json=True,
                 include_raw=True
             )._packets_from_tshark_sync()  # pcap_dir is the directory of my pcap file
         elif standard == "AC":
             packets = pyshark.FileCapture(
-                input_file=file_name,
+                input_file=file,
                 display_filter='wlan.vht.mimo_control.feedbacktype==%s && wlan.addr==%s' % (mimo, MAC),
                 use_json=True,
                 include_raw=True
@@ -131,7 +131,7 @@ if __name__ == '__main__':
         v_matrices_all = []
 
         # Process each packet
-        for p in range(20):
+        for p in range(num_packet_to_process):
             # Extract raw frame data from the packet
             packet = packets.__next__().frame_raw.value
             print('packet___________ ' + str(p) + '\n\n\n')
@@ -283,10 +283,10 @@ if __name__ == '__main__':
             bfi_angles_all_packets.append(bfi_angles(Feed_back_angles_bin_chunk, LSB, NSUBC_VALID, order_bits))
 
         # Save v-matrices and angles to files
-        np.save(saved_vmatrices, v_matrices_all)
-        np.save(saved_angles, bfi_angles_all_packets) #do i still need this if i save below
+        # np.save(saved_vmatrices, v_matrices_all)
+        # np.save(saved_angles, bfi_angles_all_packets)
 
-        out_base = str(file_name).replace(".pcap", "")
+        out_base = str(file).replace(".pcapng", "")
         np.save(out_base + "_vmatrices.npy", v_matrices_all)
         np.save(out_base + "_angles.npy", bfi_angles_all_packets)
 
