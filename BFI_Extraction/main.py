@@ -109,7 +109,7 @@ if __name__ == '__main__':
         else:
             print("input a valid bandwidth for IEEE 802.11ac")
 
-    for file in range(pcapng_files):
+    for file in pcapng_files:
         # Read packets from the pcap file based on the selected standard
         if standard == "AX":
             packets = pyshark.FileCapture(
@@ -133,7 +133,7 @@ if __name__ == '__main__':
         # Process each packet
         for p in range(num_packet_to_process):
             # Extract raw frame data from the packet
-            packet = packets.__next__().frame_raw.value
+            packet = packets.__next__().frame_raw.value #problem here, goes to line 70 in tshark.py
             print('packet___________ ' + str(p) + '\n\n\n')
 
             # Extract header information from the raw frame data
