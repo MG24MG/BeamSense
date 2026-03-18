@@ -23,6 +23,10 @@ from vmatrices import vmatrices
 from bfi_angles import bfi_angles
 from utils import hex2dec, flip_hex
 from pathlib import Path #new: so that I can have file directories
+import os
+
+#to fix not finding pyshark
+#cap = pyshark.LiveCapture(tshark_path='/home/maria/.local/lib/python3.10/site-packages/pyshark')
 
 # Set the default value for the least significant bit (LSB)
 LSB = True
@@ -286,7 +290,8 @@ if __name__ == '__main__':
         # np.save(saved_vmatrices, v_matrices_all)
         # np.save(saved_angles, bfi_angles_all_packets)
 
-        out_base = str(file).replace(".pcapng", "")
-        np.save(out_base + "_vmatrices.npy", v_matrices_all)
-        np.save(out_base + "_angles.npy", bfi_angles_all_packets)
+        out_base = str(file).replace(".pcapng", "").replace("Raw", "Processed")
+        #np.save(out_base + "_" + MAC + "_vmatrices.npy", v_matrices_all)
+        #np.save(out_base + "_" + MAC + "_angles.npy", bfi_angles_all_packets)
+
 
