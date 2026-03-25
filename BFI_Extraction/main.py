@@ -137,7 +137,10 @@ if __name__ == '__main__':
         # Process each packet
         for p in range(num_packet_to_process):
             # Extract raw frame data from the packet
-            packet = packets.__next__().frame_raw.value #problem here, goes to line 70 in tshark.py
+            try:
+                packet = packets.__next__().frame_raw.value #problem here, goes to line 70 in tshark.py
+            except:
+                break
             print('packet___________ ' + str(p) + '\n\n\n')
 
             # Extract header information from the raw frame data
@@ -286,11 +289,29 @@ if __name__ == '__main__':
             v_matrices_all.append(vmatrices(angle, phi_bit, psi_bit, NSUBC_VALID, Nr, Nc_users, config))
             bfi_angles_all_packets.append(bfi_angles(Feed_back_angles_bin_chunk, LSB, NSUBC_VALID, order_bits))
 
+        out_base = str(file).replace("Raw", "Processed")
+        file_path = Path(out_base)
+
+        env = file_path.parts[-4]
+        station = file_path.parts[-3]
+        person = file_path.parts[-2]
+
+
+
+        output_folder = "/home/maria/Documents/BeamSense/Data/BFI/Processed/" + station + "/" + person + "/"
+        #output_folder.mkdir(parents=True, exist_ok=True)
+
+        file_base_vmatrices = output_folder + f"{file_path.stem}_{station}_vmatrices.npy"
+        file_base_angles = output_folder + f"{file_path.stem}_{station}_angles.npy"
+
+        np.save(file_base_vmatrices, v_matrices_all)
+        np.save(file_base_angles, bfi_angles_all_packets)
+
         # Save v-matrices and angles to files
         # np.save(saved_vmatrices, v_matrices_all)
         # np.save(saved_angles, bfi_angles_all_packets)
 
-        out_base = str(file).replace(".pcapng", "").replace("Raw", "Processed")
+        #out_base = str(file).replace(".pcapng", "").replace("Raw", "Processed")
         #np.save(out_base + "_" + MAC + "_vmatrices.npy", v_matrices_all)
         #np.save(out_base + "_" + MAC + "_angles.npy", bfi_angles_all_packets)
 
