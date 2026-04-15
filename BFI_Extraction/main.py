@@ -114,6 +114,22 @@ if __name__ == '__main__':
             print("input a valid bandwidth for IEEE 802.11ac")
 
     for file in pcapng_files:
+        out_base = str(file).replace("Raw", "Processed")
+        file_path = Path(out_base) #moved from bottom so that file name is already created
+
+        env = file_path.parts[-4]
+        station = file_path.parts[-3]
+        person = file_path.parts[-2]
+
+        output_folder = "/home/maria/Documents/BeamSense/Data/BFI/Processed/" + station + "/" + person + "/"
+
+        file_base_vmatrices = output_folder + f"{file_path.stem}_{station}_vmatrices.npy"
+        file_base_angles = output_folder + f"{file_path.stem}_{station}_angles.npy"
+
+        if os.path.exists(file_base_vmatrices) and os.path.exists(file_base_angles): #based on this file name, checks if file was already processed
+            print(f"SKIPPING, already processed: {file_path}")
+            continue
+
         # Read packets from the pcap file based on the selected standard
         if standard == "AX":
             packets = pyshark.FileCapture(
@@ -289,20 +305,10 @@ if __name__ == '__main__':
             v_matrices_all.append(vmatrices(angle, phi_bit, psi_bit, NSUBC_VALID, Nr, Nc_users, config))
             bfi_angles_all_packets.append(bfi_angles(Feed_back_angles_bin_chunk, LSB, NSUBC_VALID, order_bits))
 
-        out_base = str(file).replace("Raw", "Processed")
-        file_path = Path(out_base)
 
-        env = file_path.parts[-4]
-        station = file_path.parts[-3]
-        person = file_path.parts[-2]
-
-
-
-        output_folder = "/home/maria/Documents/BeamSense/Data/BFI/Processed/" + station + "/" + person + "/"
         #output_folder.mkdir(parents=True, exist_ok=True)
 
-        file_base_vmatrices = output_folder + f"{file_path.stem}_{station}_vmatrices.npy"
-        file_base_angles = output_folder + f"{file_path.stem}_{station}_angles.npy"
+
 
         np.save(file_base_vmatrices, v_matrices_all)
         np.save(file_base_angles, bfi_angles_all_packets)

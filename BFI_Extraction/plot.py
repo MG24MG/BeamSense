@@ -1,60 +1,113 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib
 import glob
+from pathlib import Path
 
-matplotlib.rcParams['pdf.fonttype'] = 42
-matplotlib.rcParams['ps.fonttype'] = 42
+files = sorted(glob.glob("/home/maria/Documents/BeamSense/Data/BFI/Processed/Livingroom/Shahriar/*_vmatrices.npy"))
 
-files = sorted(glob.glob("/home/maria/Documents/BeamSense/Data/BFI/Processed/Livingroom/Shahriar/*_vmatrices.npy")) # something wrong here prob
-
-all_angles = []
+output_dir = Path("/home/maria/Documents/BeamSense/Data/BFI/Plots")
+output_dir.mkdir(parents=True, exist_ok=True)
 
 for file in files:
-    # try:
-    #
-    # except:
-    #     break
-    print(f"Loading {file}")
-    angles = np.load(file, allow_pickle=True)
+    print(f"Processing {file}")
 
-    print("Shape:", angles.shape)
+    v = np.load(file, allow_pickle=True)
+    v = np.array(v)
 
-    all_angles.append(angles)
+    print("Shape:", v.shape)
 
-angle = np.stack(all_angles, axis=0)
+    # Expect: (time, frequency, 1) OR (time, frequency)
+    if v.ndim == 4:
+        v = v[:, :, :, 0]  # remove receiver dim
 
-print("Combined shape:", angle.shape)
+    if v.ndim != 3:
+        print("Skipping unexpected shape")
+        continue
+
+    # maybe include maybe not
+    v = np.abs(v)
+
+    time_steps, num_freq = v.shape
+
+    plt.figure(figsize=(10, 5))
+
+    x = range(num_freq)
+
+    # subsample time to avoid clutter
+    step = max(1, time_steps // 20)
+
+    for t in range(0, time_steps, step):
+        plt.plot(x, v[t, :], linewidth=0.8, alpha=0.7)
+
+    plt.title(Path(file).stem)
+    plt.xlabel("Subcarrier (Frequency)")
+    plt.ylabel("Value")
+    plt.grid()
+
+    save_path = output_dir / f"{Path(file).stem}.png"
+    plt.savefig(save_path, dpi=300)
+    plt.close()
+
+    print(f"Saved: {save_path}")
 
 
-angles_mean = np.mean(angle, axis=1)
-
-x = range(angles_mean.shape[0])
-
-fig, ax = plt.subplots(5, 1, figsize=(10, 10))
-
-labels = ['Angle 1', 'Angle 2', 'Angle 3', 'Angle 4']
-
-for i in range(4):
-    ax[i].plot(x, angles_mean[:, i], linewidth=1)
-    ax[i].set_title(labels[i], fontsize=10)
-    ax[i].set_ylabel('Value', fontsize=8)
-    ax[i].grid()
-    ax[i].tick_params(axis='both', labelsize=8)
-    ax[i].set_xticklabels([])
-
-subchannel = np.std(angle, axis=2).mean(axis=1)
-
-ax[4].plot(x, subchannel, linewidth=1)
-ax[4].set_title("Sub-channel", fontsize=10)
-ax[4].set_xlabel('Packet Index (Time)', fontsize=10)
-ax[4].set_ylabel('Value', fontsize=8)
-ax[4].grid()
-ax[4].tick_params(axis='both', labelsize=8)
-
-plt.tight_layout()
-plt.savefig('beamSense_graph.png', dpi=300)
-plt.show()
+# import numpy as np
+# import matplotlib.pyplot as plt
+# import matplotlib
+# import glob
+#
+# matplotlib.rcParams['pdf.fonttype'] = 42
+# matplotlib.rcParams['ps.fonttype'] = 42
+#
+# files = sorted(glob.glob("/home/maria/Documents/BeamSense/Data/BFI/Processed/Livingroom/Shahriar/*_vmatrices.npy")) # something wrong here prob
+#
+# all_angles = []
+#
+# for file in files:
+#     # try:
+#     #
+#     # except:
+#     #     break
+#     print(f"Loading {file}")
+#     angles = np.load(file, allow_pickle=True)
+#
+#     print("Shape:", angles.shape)
+#
+#     all_angles.append(angles)
+#
+# angle = np.stack(all_angles, axis=0)
+#
+# print("Combined shape:", angle.shape)
+#
+#
+# angles_mean = np.mean(angle, axis=1)
+#
+# x = range(angles_mean.shape[0])
+#
+# fig, ax = plt.subplots(5, 1, figsize=(10, 10))
+#
+# labels = ['Angle 1', 'Angle 2', 'Angle 3', 'Angle 4']
+#
+# for i in range(4):
+#     ax[i].plot(x, angles_mean[:, i], linewidth=1)
+#     ax[i].set_title(labels[i], fontsize=10)
+#     ax[i].set_ylabel('Value', fontsize=8)
+#     ax[i].grid()
+#     ax[i].tick_params(axis='both', labelsize=8)
+#     ax[i].set_xticklabels([])
+#
+# subchannel = np.std(angle, axis=2).mean(axis=1)
+#
+# ax[4].plot(x, subchannel, linewidth=1)
+# ax[4].set_title("Sub-channel", fontsize=10)
+# ax[4].set_xlabel('Packet Index (Time)', fontsize=10)
+# ax[4].set_ylabel('Value', fontsize=8)
+# ax[4].grid()
+# ax[4].tick_params(axis='both', labelsize=8)
+#
+# plt.tight_layout()
+# plt.savefig('beamSense_graph.png', dpi=300)
+# plt.show()
 
 ## og code
 # import numpy as np
