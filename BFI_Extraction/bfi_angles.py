@@ -18,11 +18,7 @@ import numpy as np
 
 def bfi_angles(bin_chunk,LSB, NSUBC_VALID,order_bits):
     bfi_angles_all = []
-
-    n_subc = len(bin_chunk)
-    n_iter = min(NSUBC_VALID, n_subc)
-
-    for l in range(n_iter): #changed
+    for l in range(NSUBC_VALID):
         chunk = bin_chunk[l]
         idx = 0
         bfi_angles_single = np.zeros(len(order_bits), dtype=int)

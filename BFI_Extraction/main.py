@@ -285,8 +285,6 @@ if __name__ == '__main__':
                 Feedback_angles_splitted = np.array(wrap(Feedback_angles, 2))
                 Feedback_angles_bin = ""
 
-
-
             # Convert feedback angles to binary format
             for i in range(0, len(Feedback_angles_splitted)):
                 bin_str = str(format(hex2dec(Feedback_angles_splitted[i]), '08b'))
