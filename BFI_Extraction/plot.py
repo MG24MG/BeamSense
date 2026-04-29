@@ -106,7 +106,7 @@ for file in files:
 
     for i, ax in enumerate(axes):
         for t in range(0, time_steps, step):
-            ax.plot(x, v[t, :, i], linewidth=0.6, alpha=0.6, color='black')
+            ax.plot(x, abs(v[t, :, i]), linewidth=0.6, alpha=0.6, color='black')
         ax.set_title(angle_labels[i], fontsize=10)
         ax.set_xlabel('Time', fontsize=8)
         ax.set_ylabel('Frequency', fontsize=8)
