@@ -63,6 +63,7 @@
 #     print(f"Saved: {save_path}")
 #     plt.clf()
 
+#creates charts based on amount of angles, one subplot per angle (fix variable names)
 import numpy as np
 import matplotlib.pyplot as plt
 import glob
@@ -96,7 +97,7 @@ for file in files:
     x = np.arange(num_freq)
     step = max(1, time_steps // 20)
 
-    angle_labels = [f'Angle {i+1}' for i in range(num_angles)]  # dynamic, works for any count
+    angle_labels = [f' Receiving antenna {i+1}' for i in range(num_angles)]  # dynamic, works for any count
 
     fig, axes = plt.subplots(num_angles, 1, figsize=(8, 2.5 * num_angles), sharex=True)
 
