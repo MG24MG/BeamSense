@@ -24,10 +24,12 @@ from bfi_angles import bfi_angles
 from utils import hex2dec, flip_hex
 from pathlib import Path #new: so that I can have file directories
 import os
+from bfi_angles import nsubc_valid
 
 #to fix not finding pyshark
 #cap = pyshark.LiveCapture(tshark_path='/home/maria/.local/lib/python3.10/site-packages/pyshark')
 
+check = False
 # Set the default value for the least significant bit (LSB)
 LSB = True
 
@@ -152,6 +154,7 @@ if __name__ == '__main__':
 
         # Process each packet
         for p in range(num_packet_to_process):
+
             # Extract raw frame data from the packet
             try:
                 packet = packets.__next__().frame_raw.value #problem here, goes to line 70 in tshark.py
@@ -298,15 +301,24 @@ if __name__ == '__main__':
 
             Feed_back_angles_bin_chunk = np.array(wrap(Feedback_angles_bin[:(tot_bits_users * NSUBC_VALID)], tot_bits_users))
 
+            if len(Feed_back_angles_bin_chunk) != NSUBC_VALID: #new
+                print(f"SKIPPING packet {p}: expected {NSUBC_VALID} subcarrier chunks, got {len(Feed_back_angles_bin_chunk)}")
+                check = True
+                break
             # Calculate angles and v-matrices and store them in lists
             angle = bfi_angles(Feed_back_angles_bin_chunk, LSB, NSUBC_VALID, order_bits)
             v_matrices_all.append(vmatrices(angle, phi_bit, psi_bit, NSUBC_VALID, Nr, Nc_users, config))
             bfi_angles_all_packets.append(bfi_angles(Feed_back_angles_bin_chunk, LSB, NSUBC_VALID, order_bits))
 
 
+
+
         #output_folder.mkdir(parents=True, exist_ok=True)
-
-
+        #if len(v_matrices_all) < num_packet_to_process:
+        if check == True:
+            print(f"SKIPPING save: only got {len(v_matrices_all)}/{num_packet_to_process} packets for {file_path}")
+            check = False
+            continue
 
         np.save(file_base_vmatrices, v_matrices_all)
         np.save(file_base_angles, bfi_angles_all_packets)

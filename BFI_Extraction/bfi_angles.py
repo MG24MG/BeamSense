@@ -14,10 +14,11 @@
 """
 
 import numpy as np
-
+nsubc_valid = None
 
 def bfi_angles(bin_chunk,LSB, NSUBC_VALID,order_bits):
     bfi_angles_all = []
+    nsubc_valid = NSUBC_VALID
     for l in range(NSUBC_VALID):
         chunk = bin_chunk[l]
         idx = 0
