@@ -71,7 +71,7 @@ if __name__ == "__main__":
     args = parse_args()
 
     station = args.station
-    Test = args.Test
+    Test = args.Test #BFI
     model_save = args.model_save
     window_size = WINDOW
 
@@ -79,7 +79,7 @@ if __name__ == "__main__":
 
     # I define dataset and output locations based on the selected test/station setup.
     data_path = "../Data"
-    data_proc = "processed_dataset"
+    data_proc = "Processed"
 
     model_dir = os.path.join(data_path, Test, data_proc, "beamf_angles", model_save)
     data_dir = os.path.join(data_path, Test, data_proc, station, "beamf_angles")

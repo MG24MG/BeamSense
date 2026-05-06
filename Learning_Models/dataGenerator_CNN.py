@@ -26,7 +26,7 @@ window_size = 10
 
 def read_mat(dir, file, windowsize):
     # I load one `.mat` sample and map the filename prefix to its class index.
-    data = spio.loadmat(os.path.join(dir, file))
+    data = spio.loadmat(os.path.join(dir, file)) #fix to refer to npy, fix lines 31, 34, etc
     if file[0] == "A":
         angle_data = data["bf_matrix"]
         label = 0
@@ -152,7 +152,7 @@ class DataGenerator(keras.utils.Sequence):
         batch_data = np.empty((self.batchsize, self.windowsize, self.length, self.height))
         batch_label = np.empty(self.batchsize, dtype=int)
         for i, k in enumerate(indexes):
-            batch_data[i], batch_label[i] = read_mat(self.dataset_path, self.datalist[k], self.windowsize)
+            batch_data[i], batch_label[i] = read_mat(self.dataset_path, self.datalist[k], self.windowsize) #change because currently matlab, needs to be npy, reads processed data filoes
         if self.to_categorical:
             # I convert integer labels to one-hot encoding when requested.
             batch_label = keras.utils.to_categorical(batch_label, num_classes=20)

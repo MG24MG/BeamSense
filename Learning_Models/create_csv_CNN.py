@@ -20,7 +20,7 @@ import csv
 # I set the dataset location for the station/scenario I want to process.
 station = "9C/beamf_angles"
 Test = "Classroom_All"
-proc_dir = "processed_dataset"
+proc_dir = "Processed"
 
 # I fix the random seed so the train/val/test split stays reproducible.
 np.random.seed(111)
