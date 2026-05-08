@@ -113,11 +113,11 @@ if __name__ == '__main__':
         station = file_path.parts[-3]
         mode = file_path.parts[-2]
 
-        output_folder = "/home/maria/Documents/BeamSense/Data/BFI/New_Processed/" + station + "/"
+        base = "/home/maria/Documents/BeamSense/Data/BFI/New_Processed/" + station + "/"
 
-        file_base_train = output_folder + f"{file_path.stem}_{station}_train_angles.npy"
-        file_base_val = output_folder + f"{file_path.stem}_{station}_val_angles.npy"
-        file_base_test = output_folder + f"{file_path.stem}_{station}_test_angles.npy"
+        file_base_train = base + "Train/" + f"{file_path.stem}_{station}_angles.npy"
+        file_base_val = base + "Val/" + f"{file_path.stem}_{station}_angles.npy"
+        file_base_test = base + "Test/" + f"{file_path.stem}_{station}_angles.npy"
 
         if os.path.exists(file_base_train) and os.path.exists(file_base_val) and os.path.exists(file_base_test):
             print(f"SKIPPING, already processed: {file_path}")
@@ -306,7 +306,6 @@ if __name__ == '__main__':
             check = False
             continue
 
-        #os.makedirs(output_folder, exist_ok=True)
         np.save(file_base_train, train_angles)
         np.save(file_base_val, val_angles)
         np.save(file_base_test, test_angles)

@@ -164,6 +164,7 @@ if __name__ == "__main__":
     Y = test_gen.labels[test_gen.indexes]
     Y_true = np.zeros(len(Y))
 
+#dont need conversion, fix
     label_to_index = {
         "A": 0,
         "B": 1,
@@ -186,9 +187,11 @@ if __name__ == "__main__":
         "S": 18,
     }
 
+#dont need this
     for i, e in enumerate(Y):
         Y_true[i] = label_to_index.get(e, 19)
 
+    #can check if y is what i have for label
     print(Y_true)
 
     cm = confusion_matrix(Y_true[: len(Y_pred)], Y_pred, normalize="true")

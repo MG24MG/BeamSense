@@ -24,71 +24,90 @@ import os
 window_size = 10
 
 
-def read_mat(dir, file, windowsize):
-    # I load one `.mat` sample and map the filename prefix to its class index.
-    data = spio.loadmat(os.path.join(dir, file)) #fix to refer to npy, fix lines 31, 34, etc
-    if file[0] == "A":
-        angle_data = data["bf_matrix"]
-        label = 0
-    elif file[0] == "B":
-        angle_data = data["bf_matrix"]
-        label = 1
-    elif file[0] == "C":
-        angle_data = data["bf_matrix"]
-        label = 2
-    elif file[0] == "D":
-        angle_data = data["bf_matrix"]
-        label = 3
-    elif file[0] == "E":
-        angle_data = data["bf_matrix"]
-        label = 4
-    elif file[0] == "F":
-        angle_data = data["bf_matrix"]
-        label = 5
-    if file[0] == "G":
-        angle_data = data["bf_matrix"]
-        label = 6
-    elif file[0] == "H":
-        angle_data = data["bf_matrix"]
-        label = 7
-    elif file[0] == "I":
-        angle_data = data["bf_matrix"]
-        label = 8
-    elif file[0] == "J":
-        angle_data = data["bf_matrix"]
-        label = 9
-    elif file[0] == "K":
-        angle_data = data["bf_matrix"]
-        label = 10
-    elif file[0] == "L":
-        angle_data = data["bf_matrix"]
-        label = 11
-    elif file[0] == "M":
-        angle_data = data["bf_matrix"]
-        label = 12
-    elif file[0] == "N":
-        angle_data = data["bf_matrix"]
-        label = 13
-    elif file[0] == "O":
-        angle_data = data["bf_matrix"]
-        label = 14
-    elif file[0] == "P":
-        angle_data = data["bf_matrix"]
-        label = 15
-    elif file[0] == "Q":
-        angle_data = data["bf_matrix"]
-        label = 16
-    elif file[0] == "R":
-        angle_data = data["bf_matrix"]
-        label = 17
-    elif file[0] == "S":
-        angle_data = data["bf_matrix"]
-        label = 18
-    elif file[0] == "T":
-        angle_data = data["bf_matrix"]
-        label = 19
+def read_npy(dir, file, windowsize):
+    angle_data = np.load(os.path.join(dir, file), allow_pickle=True)
+
+    if angle_data.ndim == 4:
+        angle_data = angle_data[:, :, :, 0]  # drops last value
+
+    angle_data = angle_data[:windowsize]  # should i use this or add a clause about if it doesnt fit
+
+    label_num = int(file.split("_")[3])  # make sure to change num
+    label = label_num - 1
+
+
+
+    #if other way (A-->1)
+    # letter = file.split("_")[3]  # extract letter from filename
+    # label = ord(letter.upper()) - ord('A')
 
     return angle_data, label
+#def read_mat(dir, file, windowsize):
+
+    # I load one `.mat` sample and map the filename prefix to its class index.
+    # data = spio.loadmat(os.path.join(dir, file)) #fix to refer to npy, fix lines 31, 34, etc
+    # if file[0] == "A":
+    #     angle_data = data["bf_matrix"]
+    #     label = 0
+    # elif file[0] == "B":
+    #     angle_data = data["bf_matrix"]
+    #     label = 1
+    # elif file[0] == "C":
+    #     angle_data = data["bf_matrix"]
+    #     label = 2
+    # elif file[0] == "D":
+    #     angle_data = data["bf_matrix"]
+    #     label = 3
+    # elif file[0] == "E":
+    #     angle_data = data["bf_matrix"]
+    #     label = 4
+    # elif file[0] == "F":
+    #     angle_data = data["bf_matrix"]
+    #     label = 5
+    # if file[0] == "G":
+    #     angle_data = data["bf_matrix"]
+    #     label = 6
+    # elif file[0] == "H":
+    #     angle_data = data["bf_matrix"]
+    #     label = 7
+    # elif file[0] == "I":
+    #     angle_data = data["bf_matrix"]
+    #     label = 8
+    # elif file[0] == "J":
+    #     angle_data = data["bf_matrix"]
+    #     label = 9
+    # elif file[0] == "K":
+    #     angle_data = data["bf_matrix"]
+    #     label = 10
+    # elif file[0] == "L":
+    #     angle_data = data["bf_matrix"]
+    #     label = 11
+    # elif file[0] == "M":
+    #     angle_data = data["bf_matrix"]
+    #     label = 12
+    # elif file[0] == "N":
+    #     angle_data = data["bf_matrix"]
+    #     label = 13
+    # elif file[0] == "O":
+    #     angle_data = data["bf_matrix"]
+    #     label = 14
+    # elif file[0] == "P":
+    #     angle_data = data["bf_matrix"]
+    #     label = 15
+    # elif file[0] == "Q":
+    #     angle_data = data["bf_matrix"]
+    #     label = 16
+    # elif file[0] == "R":
+    #     angle_data = data["bf_matrix"]
+    #     label = 17
+    # elif file[0] == "S":
+    #     angle_data = data["bf_matrix"]
+    #     label = 18
+    # elif file[0] == "T":
+    #     angle_data = data["bf_matrix"]
+    #     label = 19
+    #
+    # return angle_data, label
 
 
 class DataGenerator(keras.utils.Sequence):
@@ -152,7 +171,7 @@ class DataGenerator(keras.utils.Sequence):
         batch_data = np.empty((self.batchsize, self.windowsize, self.length, self.height))
         batch_label = np.empty(self.batchsize, dtype=int)
         for i, k in enumerate(indexes):
-            batch_data[i], batch_label[i] = read_mat(self.dataset_path, self.datalist[k], self.windowsize) #change because currently matlab, needs to be npy, reads processed data filoes
+            batch_data[i], batch_label[i] = read_npy(self.dataset_path, self.datalist[k], self.windowsize) #change because currently matlab, needs to be npy, reads processed data filoes
         if self.to_categorical:
             # I convert integer labels to one-hot encoding when requested.
             batch_label = keras.utils.to_categorical(batch_label, num_classes=20)

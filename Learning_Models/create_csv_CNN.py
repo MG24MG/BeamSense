@@ -60,7 +60,7 @@ for root, dirs, files in os.walk(data_path):
     if root[-5:] == "batch":
         for file in sorted(files, key=lambda x: custom_sort_key(x)):
             filename = os.path.join(root[-7:], file)
-            label = root[-7]
+            label = int(file.split("_")[3]) #would this work here
             rand = np.random.rand(1)
             if rand < 0.7:
                 writer_train.writerow({"filename": filename, "label": label})
