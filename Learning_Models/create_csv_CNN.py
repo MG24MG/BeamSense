@@ -18,6 +18,7 @@ import os
 import csv
 
 # I set the dataset location for the station/scenario I want to process.
+# instead, have it be, where you just input location, and based on that it goes to that file section in New_processd and goes through all three train, val, test
 station = "9C/beamf_angles"
 Test = "Classroom_All"
 proc_dir = "Processed"
@@ -26,14 +27,14 @@ proc_dir = "Processed"
 np.random.seed(111)
 data_pa = "../Data"
 
-data_path = os.path.join(data_pa, Test, proc_dir, station)
+data_path = os.path.join(data_pa, Test, proc_dir, station) #fix data path
 
-train_csv = os.path.join(data_path, "train_set.csv")
-val_csv = os.path.join(data_path, "val_set.csv")
+train_csv = os.path.join(data_path, "train_set.csv") #do i need to create new file folders here, where does csv go?
+val_csv = os.path.join(data_path, "val_set.csv") #make one for each location: classroom, livingroom, etc
 test_csv = os.path.join(data_path, "test_set.csv")
 
 
-def custom_sort_key(filename):
+def custom_sort_key(filename): #this does nothing with current file layout, would there be a better wy to sort?
     # I sort by sample index and offset selected person IDs to keep ordering stable.
     _, person, _, index = filename.split("_")
     value = int(index[:-4])
@@ -62,7 +63,7 @@ for root, dirs, files in os.walk(data_path):
             filename = os.path.join(root[-7:], file)
             label = int(file.split("_")[3]) #would this work here
             rand = np.random.rand(1)
-            if rand < 0.7:
+            if rand < 0.7: #instead of rand, since already rand, have it go through each train, val folder
                 writer_train.writerow({"filename": filename, "label": label})
             elif rand < 0.85:
                 writer_val.writerow({"filename": filename, "label": label})

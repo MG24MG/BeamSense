@@ -82,7 +82,9 @@ if __name__ == "__main__":
     data_proc = "Processed"
 
     model_dir = os.path.join(data_path, Test, data_proc, "beamf_angles", model_save)
-    data_dir = os.path.join(data_path, Test, data_proc, station, "beamf_angles")
+    data_dir = os.path.join(data_path, Test, data_proc, station, "beamf_angles") #do i change this to where the csv files are?
+
+    #not sure what lines 73-86 trying to save, do i need new folders? is it saving the graphs or what?
 
     from tensorflow import keras
 
@@ -137,7 +139,7 @@ if __name__ == "__main__":
     plt.plot(history.history["accuracy"], label="Training acc")
     plt.plot(history.history["val_accuracy"], label="Validation acc")
     plt.legend()
-    plt.savefig(os.path.join(data_path, Test, data_proc, "beamf_angles", "train_val_accuracy.png"), dpi=300)
+    plt.savefig(os.path.join(data_path, Test, data_proc, "beamf_angles", "train_val_accuracy.png"), dpi=300) #change file location, new folder for the graphs?
     plt.show()
 
     print("The validation accuracy is :", history.history["val_accuracy"])
@@ -208,4 +210,4 @@ if __name__ == "__main__":
     ax.set_ylabel("Actual", fontsize=20)
     ax.set_xlabel("Predicted", fontsize=20)
     # I save the normalized confusion matrix for this run.
-    plt.savefig(os.path.join(data_path, Test, data_proc, "beamf_angles", "confusion_matrix.png"), dpi=300)
+    plt.savefig(os.path.join(data_path, Test, data_proc, "beamf_angles", "confusion_matrix.png"), dpi=300) #do i save this in a new place from before?
