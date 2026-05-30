@@ -23,7 +23,7 @@ WINDOW_SIZE = WINDOW
 def parse_args():
     # I parse the three required runtime parameters for this training run.
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("Test", help="Testing Scenario")
+    parser.add_argument("Test", help="Testing Location")
     parser.add_argument("station", help="Name of the Station")
     parser.add_argument("model_save", help="Name of the model")
     return parser.parse_args()
@@ -78,13 +78,11 @@ if __name__ == "__main__":
     import os
 
     # I define dataset and output locations based on the selected test/station setup.
-    data_path = "../Data"
-    data_proc = "Processed"
+    data_path = "/home/maria/Documents/BeamSense/Data/BFI/New_Processed"
+    data_proc = "Model"
 
-    model_dir = os.path.join(data_path, Test, data_proc, "beamf_angles", model_save)
-    data_dir = os.path.join(data_path, Test, data_proc, station, "beamf_angles") #do i change this to where the csv files are?
-
-    #not sure what lines 73-86 trying to save, do i need new folders? is it saving the graphs or what?
+    model_dir = os.path.join(data_path, Test, data_proc, model_save)
+    data_dir = os.path.join(data_path, Test)
 
     from tensorflow import keras
 
@@ -139,7 +137,7 @@ if __name__ == "__main__":
     plt.plot(history.history["accuracy"], label="Training acc")
     plt.plot(history.history["val_accuracy"], label="Validation acc")
     plt.legend()
-    plt.savefig(os.path.join(data_path, Test, data_proc, "beamf_angles", "train_val_accuracy.png"), dpi=300) #change file location, new folder for the graphs?
+    plt.savefig(os.path.join(data_path, Test, data_proc, "train_val_accuracy.png"), dpi=300) #change file location, new folder for the graphs?
     plt.show()
 
     print("The validation accuracy is :", history.history["val_accuracy"])
@@ -154,7 +152,7 @@ if __name__ == "__main__":
     final_loss, final_accuracy = model.evaluate(test_gen)
     print("Final Loss: {}, Final Accuracy: {}".format(final_loss, final_accuracy))
 
-    labels = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T"}
+    labels = list(range(20))
 
     import seaborn as sns
     from sklearn.metrics import confusion_matrix
@@ -164,36 +162,8 @@ if __name__ == "__main__":
     Y_pred = np.argmax(Y_pred, axis=1)
 
     Y = test_gen.labels[test_gen.indexes]
-    Y_true = np.zeros(len(Y))
 
-#dont need conversion, fix
-    label_to_index = {
-        "A": 0,
-        "B": 1,
-        "C": 2,
-        "D": 3,
-        "E": 4,
-        "F": 5,
-        "G": 6,
-        "H": 7,
-        "I": 8,
-        "J": 9,
-        "K": 10,
-        "L": 11,
-        "M": 12,
-        "N": 13,
-        "O": 14,
-        "P": 15,
-        "Q": 16,
-        "R": 17,
-        "S": 18,
-    }
-
-#dont need this
-    for i, e in enumerate(Y):
-        Y_true[i] = label_to_index.get(e, 19)
-
-    #can check if y is what i have for label
+    Y_true = Y.astype(int)
     print(Y_true)
 
     cm = confusion_matrix(Y_true[: len(Y_pred)], Y_pred, normalize="true")
@@ -210,4 +180,4 @@ if __name__ == "__main__":
     ax.set_ylabel("Actual", fontsize=20)
     ax.set_xlabel("Predicted", fontsize=20)
     # I save the normalized confusion matrix for this run.
-    plt.savefig(os.path.join(data_path, Test, data_proc, "beamf_angles", "confusion_matrix.png"), dpi=300) #do i save this in a new place from before?
+    plt.savefig(os.path.join(data_path, Test, data_proc, "confusion_matrix.png"), dpi=300) #do i save this in a new place from before?

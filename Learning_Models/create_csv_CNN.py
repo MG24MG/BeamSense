@@ -19,30 +19,17 @@ import csv
 
 # I set the dataset location for the station/scenario I want to process.
 # instead, have it be, where you just input location, and based on that it goes to that file section in New_processd and goes through all three train, val, test
-station = "9C/beamf_angles"
-Test = "Classroom_All"
-proc_dir = "Processed"
+Test = "Classroom"
 
 # I fix the random seed so the train/val/test split stays reproducible.
 np.random.seed(111)
-data_pa = "../Data"
+data_pa = "/home/maria/Documents/BeamSense/Data/BFI/New_Processed"
 
-data_path = os.path.join(data_pa, Test, proc_dir, station) #fix data path
+data_path = os.path.join(data_pa, Test) #fix data path
 
 train_csv = os.path.join(data_path, "train_set.csv") #do i need to create new file folders here, where does csv go?
 val_csv = os.path.join(data_path, "val_set.csv") #make one for each location: classroom, livingroom, etc
 test_csv = os.path.join(data_path, "test_set.csv")
-
-
-def custom_sort_key(filename): #this does nothing with current file layout, would there be a better wy to sort?
-    # I sort by sample index and offset selected person IDs to keep ordering stable.
-    _, person, _, index = filename.split("_")
-    value = int(index[:-4])
-    if person == "72":
-        value += 500000
-    elif person == "73":
-        value += 1000000
-    return value
 
 # I open output CSV files and write headers for each split.
 train_csv = open(train_csv, "w", newline="")
@@ -56,16 +43,14 @@ writer_val.writeheader()
 writer_test = csv.DictWriter(test_csv, fieldnames=fieldnames)
 writer_test.writeheader()
 
-# I scan each batch folder, sort files, and split records into train/val/test.
-for root, dirs, files in os.walk(data_path):
-    if root[-5:] == "batch":
-        for file in sorted(files, key=lambda x: custom_sort_key(x)):
-            filename = os.path.join(root[-7:], file)
-            label = int(file.split("_")[3]) #would this work here
-            rand = np.random.rand(1)
-            if rand < 0.7: #instead of rand, since already rand, have it go through each train, val folder
-                writer_train.writerow({"filename": filename, "label": label})
-            elif rand < 0.85:
-                writer_val.writerow({"filename": filename, "label": label})
-            else:
-                writer_test.writerow({"filename": filename, "label": label})
+for split, writer in [("train", writer_train), ("val", writer_val), ("test", writer_test)]:
+    split_path = os.path.join(data_path, split)
+    for root, dirs, files in os.walk(split_path):
+        for file in sorted(files, key=lambda x: int(x.split("_")[3])):
+            filename = os.path.join(root, file)
+            label = int(file.split("_")[3])
+            writer.writerow({"filename": filename, "label": label})
+
+train_csv.close()
+val_csv.close()
+test_csv.close()
