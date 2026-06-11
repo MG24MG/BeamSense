@@ -46,9 +46,9 @@ writer_test.writeheader()
 for split, writer in [("train", writer_train), ("val", writer_val), ("test", writer_test)]:
     split_path = os.path.join(data_path, split)
     for root, dirs, files in os.walk(split_path):
-        for file in sorted(files, key=lambda x: int(x.split("_")[3])):
+        for file in sorted(files, key=lambda x: int(x.split("_")[4])):
             filename = os.path.join(root, file)
-            label = int(file.split("_")[3])
+            label = int(file.split("_")[4])
             writer.writerow({"filename": filename, "label": label})
 
 train_csv.close()

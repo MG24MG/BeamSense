@@ -30,12 +30,12 @@ def read_npy(dir, file, windowsize):
     if angle_data.ndim == 4:
         angle_data = angle_data[:, :, :, 0]  # drops last value
 
-    angle_data = angle_data[:windowsize]
+    angle_data = angle_data[windowsize:]
 
-    label_num = int(file.split("_")[3])
-    label = label_num - 1
+    label_num = int(file.split("_")[4])
 
-    return angle_data, label
+
+    return angle_data, label_num
 
 
 class DataGenerator(keras.utils.Sequence):
