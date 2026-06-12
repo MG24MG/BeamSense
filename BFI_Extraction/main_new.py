@@ -115,9 +115,9 @@ if __name__ == '__main__':
 
         base = "/home/maria/Documents/BeamSense/Data/BFI/New_Processed/" + station + "/"
 
-        file_base_train = base + "Train/" + f"{file_path.stem}_{station}_angles.npy"
-        file_base_val = base + "Val/" + f"{file_path.stem}_{station}_angles.npy"
-        file_base_test = base + "Test/" + f"{file_path.stem}_{station}_angles.npy"
+        file_base_train = base + "train/" + f"{file_path.stem}_{station}_angles.npy"
+        file_base_val = base + "val/" + f"{file_path.stem}_{station}_angles.npy"
+        file_base_test = base + "test/" + f"{file_path.stem}_{station}_angles.npy"
 
         if os.path.exists(file_base_train) and os.path.exists(file_base_val) and os.path.exists(file_base_test):
             print(f"SKIPPING, already processed: {file_path}")
@@ -143,6 +143,7 @@ if __name__ == '__main__':
         train_angles = []
         val_angles = []
         test_angles = []
+        all_angles = []
 
         # Process each packet
         for p in range(num_packet_to_process):
@@ -293,13 +294,23 @@ if __name__ == '__main__':
             # Calculate angles and store them in lists
             angle = bfi_angles(Feed_back_angles_bin_chunk, LSB, NSUBC_VALID, order_bits)
 
-            rand = np.random.rand(1)
-            if rand < 0.7:
-                train_angles.append(angle)
-            elif rand < 0.85:
-                val_angles.append(angle)
-            else:
-                test_angles.append(angle)
+            all_angles.append(angle)
+
+        num_all_angles = len(all_angles)
+        train_split = int(np.floor(num_all_angles * 0.7))
+        val_split = int(np.floor(num_all_angles * 0.2))
+
+        train_angles.append(all_angles[0:train_split])
+        val_angles.append(all_angles[train_split:train_split+val_split])
+        test_angles.append(all_angles[train_split+val_split:num_all_angles])
+
+        # rand = np.random.rand(1)
+        # if rand < 0.7:
+        #     train_angles.append(angle)
+        # elif rand < 0.85:
+        #     val_angles.append(angle)
+        # else:
+        #     test_angles.append(angle)
 
         if check == True:
             print(f"SKIPPING save:  incomplete packets for {file_path}")
