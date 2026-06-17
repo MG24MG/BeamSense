@@ -113,6 +113,8 @@ if __name__ == "__main__":
         min_lr=0.00001,
     )
 
+    # tensorboard callback, find a way to include, also code overfitting (i think it was called), try plotting train and val to see how diff they are
+    # also fix label issue
     checkpoint = ModelCheckpoint(model_dir, verbose=1, save_best_only=True)
     earlystopping = EarlyStopping(monitor="val_loss", min_delta=0.05, patience=10, verbose=1)
 

@@ -19,7 +19,7 @@ import csv
 
 # I set the dataset location for the station/scenario I want to process.
 # instead, have it be, where you just input location, and based on that it goes to that file section in New_processd and goes through all three train, val, test
-Test = "Classroom"
+Test = "Kitchen"
 
 # I fix the random seed so the train/val/test split stays reproducible.
 np.random.seed(111)

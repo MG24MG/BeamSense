@@ -132,25 +132,35 @@ if __name__ == '__main__':
                 include_raw=True
             )._packets_from_tshark_sync()  # pcap_dir is the directory of my pcap file
         elif standard == "AC":
-            packets = pyshark.FileCapture(
+            packets_MU = pyshark.FileCapture(
                 input_file=file,
-                display_filter='wlan.vht.mimo_control.feedbacktype==%s && wlan.addr==%s' % (mimo, MAC),
+                display_filter='(wlan.vht.mimo_control.feedbacktype==%s) && (wlan.addr==%s)' % ("MU", MAC),
+                use_json=True,
+                include_raw=True
+            )._packets_from_tshark_sync()
+
+            packets_SU = pyshark.FileCapture(
+                input_file=file,
+                display_filter='(wlan.vht.mimo_control.feedbacktype==%s) && (wlan.addr==%s)' % ("SU", MAC),
                 use_json=True,
                 include_raw=True
             )._packets_from_tshark_sync()
 
         # Initialize lists to store feedback angles within three places
-        train_angles = []
-        val_angles = []
-        test_angles = []
+        # train_angles = []
+        # val_angles = []
+        # test_angles = []
         all_angles = []
 
         # Process each packet
         for p in range(num_packet_to_process):
             try:
-                packet = packets.__next__().frame_raw.value #problem here, goes to line 70 in tshark.py
+                packet = packets_MU.__next__().frame_raw.value #problem here, goes to line 70 in tshark.py
             except:
-                break
+                try:
+                    packet = packets_SU.__next__().frame_raw.value  # problem here, goes to line 70 in tshark.py
+                finally:
+                    break
             print('packet___________ ' + str(p) + '\n\n\n')
 
             # Extract header information from the raw frame data
@@ -300,9 +310,9 @@ if __name__ == '__main__':
         train_split = int(np.floor(num_all_angles * 0.7))
         val_split = int(np.floor(num_all_angles * 0.2))
 
-        train_angles.append(all_angles[0:train_split])
-        val_angles.append(all_angles[train_split:train_split+val_split])
-        test_angles.append(all_angles[train_split+val_split:num_all_angles])
+        train_angles = all_angles[0:train_split]
+        val_angles = all_angles[train_split:train_split+val_split]
+        test_angles = all_angles[train_split+val_split:num_all_angles]
 
         # rand = np.random.rand(1)
         # if rand < 0.7:

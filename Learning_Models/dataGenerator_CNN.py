@@ -28,9 +28,12 @@ def read_npy(dir, file, windowsize):
     angle_data = np.load(os.path.join(dir, file), allow_pickle=True)
 
     if angle_data.ndim == 4:
-        angle_data = angle_data[:, :, :, 0]  # drops last value
+        angle_data = np.squeeze(angle_data[0, :, :, :])  # drops last value
 
-    angle_data = angle_data[windowsize,:,:]
+    try:
+        angle_data = angle_data[0:windowsize,:,:]
+    except:
+        return
 
     if angle_data.shape[0] < windowsize:  # add
         pad = np.zeros((windowsize - angle_data.shape[0], angle_data.shape[1], angle_data.shape[2]))  # add
@@ -101,8 +104,11 @@ class DataGenerator(keras.utils.Sequence):
         batch_data = np.empty((self.batchsize, self.windowsize, self.length, self.height))
         batch_label = np.empty(self.batchsize, dtype=int)
         for i, k in enumerate(indexes):
-            batch_data[i], batch_label[i] = read_npy(self.dataset_path, self.datalist[k], self.windowsize)
+            try:
+                batch_data[i], batch_label[i] = read_npy(self.dataset_path, self.datalist[k], self.windowsize)
+            except:
+                batch_data[i], batch_label[i] = batch_data[i-1], batch_label[i-1]
         if self.to_categorical:
             # I convert integer labels to one-hot encoding when requested.
-            batch_label = keras.utils.to_categorical(batch_label, num_classes=20)
+            batch_label = keras.utils.to_categorical(batch_label-1, num_classes=20)
         return batch_data, batch_label
