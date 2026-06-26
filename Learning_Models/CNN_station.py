@@ -15,6 +15,8 @@
 
 import argparse
 
+import tensorboard
+
 # I keep a single window-size constant so the model input size stays consistent.
 WINDOW = 10
 WINDOW_SIZE = WINDOW
@@ -29,37 +31,40 @@ def parse_args():
     return parser.parse_args()
 
 
-def getBaselineModel2D(slice_size=WINDOW_SIZE, classes=20, fc1=256, fc2=128):
-    from tensorflow.keras import layers, models
+def getBaselineModel2D(slice_size=WINDOW_SIZE, classes=20):
+    from tensorflow.keras import layers, models, regularizers
 
-    # I define the baseline 2D CNN used for beamforming-angle classification.
+    # Three conv blocks with growing width give the model enough capacity to fit the
+    # data now that overfitting is under control. Pooling is (2, 1) so it only shrinks
+    # the time axis and preserves subcarrier resolution, which is what distinguishes
+    # beamforming angles. GlobalAveragePooling keeps the dense head tiny.
+    l2 = regularizers.l2(1e-4)
     model = models.Sequential()
     model.add(
         layers.Conv2D(
-            128,
+            32,
             (3, 3),
-            activation="relu",
             padding="same",
+            kernel_regularizer=l2,
             input_shape=(slice_size, 234, 4),
         )
     )
-    model.add(layers.Conv2D(128, (3, 3), activation="relu", padding="same"))
     model.add(layers.BatchNormalization())
-
-    model.add(layers.Activation("relu"))
-    model.add(layers.Conv2D(64, (3, 3), activation="relu", padding="same"))
-    model.add(layers.Conv2D(64, (3, 3), activation="relu", padding="same"))
-    model.add(layers.BatchNormalization())
-
     model.add(layers.Activation("relu"))
     model.add(layers.MaxPooling2D(pool_size=(2, 1)))
-    model.add(layers.Conv2D(32, (3, 3), activation="relu", padding="same"))
-    model.add(layers.Conv2D(32, (3, 3), activation="relu", padding="same"))
-    model.add(layers.BatchNormalization())
 
+    model.add(layers.Conv2D(64, (3, 3), padding="same", kernel_regularizer=l2))
+    model.add(layers.BatchNormalization())
     model.add(layers.Activation("relu"))
     model.add(layers.MaxPooling2D(pool_size=(2, 1)))
-    model.add(layers.Flatten())
+
+    model.add(layers.Conv2D(128, (3, 3), padding="same", kernel_regularizer=l2))
+    model.add(layers.BatchNormalization())
+    model.add(layers.Activation("relu"))
+    model.add(layers.MaxPooling2D(pool_size=(2, 1)))
+
+    model.add(layers.GlobalAveragePooling2D())
+    model.add(layers.Dropout(0.3))
     model.add(layers.Dense(classes, activation="softmax"))
 
     model.summary()
@@ -102,7 +107,7 @@ if __name__ == "__main__":
     val_gen = DataGenerator(data_dir, val_csv, batchsize=32)
     test_gen = DataGenerator(data_dir, test_csv, batchsize=32, shuffle=False)
 
-    from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
+    from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau, TensorBoard
 
     # I configure training callbacks for LR scheduling, checkpointing, and early stopping.
     learning_rate_reduction = ReduceLROnPlateau(
@@ -113,33 +118,48 @@ if __name__ == "__main__":
         min_lr=0.00001,
     )
 
-    # tensorboard callback, find a way to include, also code overfitting (i think it was called), try plotting train and val to see how diff they are
-    # also fix label issue
     checkpoint = ModelCheckpoint(model_dir, verbose=1, save_best_only=True)
-    earlystopping = EarlyStopping(monitor="val_loss", min_delta=0.05, patience=10, verbose=1)
+    earlystopping = EarlyStopping(monitor="val_loss", min_delta=0.001, patience=10, verbose=1) # change to 0.001 for overfitting
 
     # I compile and train the model.
     model.compile(
-        optimizer=keras.optimizers.Adam(0.0001),
+        optimizer=keras.optimizers.Adam(0.001),
         loss="categorical_crossentropy",
         metrics=["accuracy"],
+    )
+
+    # to see, enter: tensorboard --logdir /home/maria/Documents/BeamSense/Data/BFI/New_Processed/Classroom/Model/logs
+    tensorboard = TensorBoard(
+        log_dir=os.path.join(data_path, Test, data_proc, "logs"),
+        histogram_freq=1,
+        write_graph=True,
+        update_freq="epoch"
     )
 
     history = model.fit(
         x=train_gen,
         epochs=100,
         validation_data=val_gen,
-        callbacks=[earlystopping, learning_rate_reduction, checkpoint],
+        callbacks=[learning_rate_reduction, checkpoint, earlystopping, tensorboard],
         verbose=1,
     )
 
+
+
     from matplotlib import pyplot as plt
+
+    plt.plot(history.history["loss"], label="Training loss")
+    plt.plot(history.history["val_loss"], label="Validation loss")
+    plt.legend()
+    plt.savefig(os.path.join(data_path, Test, data_proc, "train_val_loss.png"),dpi=300)
+    plt.show()
+
 
     # I plot and save training/validation accuracy over epochs.
     plt.plot(history.history["accuracy"], label="Training acc")
     plt.plot(history.history["val_accuracy"], label="Validation acc")
     plt.legend()
-    plt.savefig(os.path.join(data_path, Test, data_proc, "train_val_accuracy.png"), dpi=300) #change file location, new folder for the graphs?
+    plt.savefig(os.path.join(data_path, Test, data_proc, "train_val_accuracy.png"), dpi=300)
     plt.show()
 
     print("The validation accuracy is :", history.history["val_accuracy"])
@@ -182,4 +202,4 @@ if __name__ == "__main__":
     ax.set_ylabel("Actual", fontsize=20)
     ax.set_xlabel("Predicted", fontsize=20)
     # I save the normalized confusion matrix for this run.
-    plt.savefig(os.path.join(data_path, Test, data_proc, "confusion_matrix.png"), dpi=300) #do i save this in a new place from before?
+    plt.savefig(os.path.join(data_path, Test, data_proc, "confusion_matrix.png"), dpi=300)

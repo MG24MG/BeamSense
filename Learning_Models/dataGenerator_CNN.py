@@ -16,35 +16,28 @@
 import numpy as np
 from tensorflow import keras
 import pandas as pd
-from multiprocessing import Pool, cpu_count
-import scipy.io as spio
 import os
 
 # I keep the default temporal window size used by the data generator.
 window_size = 10
 
 
-def read_npy(dir, file, windowsize):
-    angle_data = np.load(os.path.join(dir, file), allow_pickle=True)
-
+def load_npy(path):
+    # I load a single .npy capture and normalize it to a (time, 234, 4) array.
+    angle_data = np.load(path, allow_pickle=True)
     if angle_data.ndim == 4:
-        angle_data = np.squeeze(angle_data[0, :, :, :])  # drops last value
+        angle_data = np.squeeze(angle_data[0, :, :, :])
+    return angle_data.astype(np.float32)
 
-    try:
-        angle_data = angle_data[0:windowsize,:,:]
-    except:
-        return
 
-    if angle_data.shape[0] < windowsize:  # add
-        pad = np.zeros((windowsize - angle_data.shape[0], angle_data.shape[1], angle_data.shape[2]))  # add
-        angle_data = np.concatenate([angle_data, pad])  # add
-
-    label_num = int(file.split("_")[4])
-    return angle_data, label_num
+def parse_label(path):
+    # I parse the angle class (A_01..A_20) from the basename and make it 0-indexed.
+    base = os.path.basename(path)
+    return int(base.split("_")[3]) - 1
 
 
 class DataGenerator(keras.utils.Sequence):
-    """Data generator to load data from batches"""
+    """Data generator that yields sliding windows over each capture."""
 
     def __init__(
         self,
@@ -55,60 +48,81 @@ class DataGenerator(keras.utils.Sequence):
         batchsize=64,
         shuffle=True,
         to_categorical=True,
+        window_stride=2,
     ):
         """Initialization
         param:
-            dataset_path: the directory to stored .mat files
-            dataset_csv: the csv file to store the list of files and labels
+            dataset_path: the directory the .npy files live under
+            dataset_csv: the csv file listing files and labels
             num_classes: number of classes
-            chunk_shape: shape of data (number of samples x 2)
+            chunk_shape: shape of one window (time x subcarriers x channels)
+            window_stride: step (in time steps) between consecutive windows
         """
-        # I load the file list and labels from the split CSV.
         df = pd.read_csv(dataset_csv)
         self.dataset_path = dataset_path
         self.batchsize = batchsize
-        self.datalist = df["filename"]
-        self.labels = df["label"]
         self.num_classes = num_classes
         self.shuffle = shuffle
         self.windowsize = chunk_shape[0]
         self.length = chunk_shape[1]
         self.height = chunk_shape[2]
         self.to_categorical = to_categorical
+        self.window_stride = window_stride
 
-        # I initialize and optionally shuffle index order for batching.
+        # I load each capture once and enumerate every sliding window as its own sample.
+        # This multiplies the usable sample count from time steps that were previously discarded.
+        self.cache = {}
+        self.samples = []  # list of (path, window_start)
+        sample_labels = []
+        for path in df["filename"]:
+            try:
+                arr = load_npy(path)
+            except Exception:
+                continue
+            self.cache[path] = arr
+            label = parse_label(path)
+            T = arr.shape[0]
+            if T < self.windowsize:
+                starts = [0]  # short captures are zero-padded into a single window
+            else:
+                starts = list(range(0, T - self.windowsize + 1, self.window_stride))
+            for s in starts:
+                self.samples.append((path, s))
+                sample_labels.append(label)
+
+        # I keep `labels`/`indexes` so downstream code (e.g. confusion matrix) stays aligned.
+        self.labels = np.array(sample_labels, dtype=int)
         self.indexes = np.arange(len(self.labels))
         np.random.shuffle(self.indexes)
         self.on_epoch_end()
 
-        return
-
     def __len__(self):
-        """Denote the number of batches"""
+        """Number of batches per epoch."""
         return int(np.floor(len(self.labels) / self.batchsize))
 
     def __getitem__(self, idx):
-        """Generate one batch of data"""
+        """Generate one batch of data."""
         indexes = self.indexes[idx * self.batchsize:(idx + 1) * self.batchsize]
-        X, y = self.__load_batch(indexes)
-        return X, y
+        return self.__load_batch(indexes)
 
     def on_epoch_end(self):
-        """Update indexes after each epoch"""
-        if self.shuffle == True:
+        """Reshuffle window order after each epoch when shuffling is enabled."""
+        if self.shuffle:
             np.random.shuffle(self.indexes)
 
     def __load_batch(self, indexes):
-        """Read new batch of data """
-        # I assemble one batch by loading each sample from disk.
-        batch_data = np.empty((self.batchsize, self.windowsize, self.length, self.height))
+        """Read one batch of windows from the in-memory cache."""
+        batch_data = np.empty((self.batchsize, self.windowsize, self.length, self.height), dtype=np.float32)
         batch_label = np.empty(self.batchsize, dtype=int)
         for i, k in enumerate(indexes):
-            try:
-                batch_data[i], batch_label[i] = read_npy(self.dataset_path, self.datalist[k], self.windowsize)
-            except:
-                batch_data[i], batch_label[i] = batch_data[i-1], batch_label[i-1]
+            path, start = self.samples[k]
+            arr = self.cache[path]
+            window = arr[start:start + self.windowsize]
+            if window.shape[0] < self.windowsize:
+                pad = np.zeros((self.windowsize - window.shape[0], self.length, self.height), dtype=np.float32)
+                window = np.concatenate([window, pad])
+            batch_data[i] = window
+            batch_label[i] = self.labels[k]
         if self.to_categorical:
-            # I convert integer labels to one-hot encoding when requested.
-            batch_label = keras.utils.to_categorical(batch_label-1, num_classes=20)
+            batch_label = keras.utils.to_categorical(batch_label, num_classes=self.num_classes)
         return batch_data, batch_label

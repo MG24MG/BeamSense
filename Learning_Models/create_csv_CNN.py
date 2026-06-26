@@ -19,16 +19,16 @@ import csv
 
 # I set the dataset location for the station/scenario I want to process.
 # instead, have it be, where you just input location, and based on that it goes to that file section in New_processd and goes through all three train, val, test
-Test = "Kitchen"
+Test = "Livingroom"
 
 # I fix the random seed so the train/val/test split stays reproducible.
 np.random.seed(111)
 data_pa = "/home/maria/Documents/BeamSense/Data/BFI/New_Processed"
 
-data_path = os.path.join(data_pa, Test) #fix data path
+data_path = os.path.join(data_pa, Test)
 
-train_csv = os.path.join(data_path, "train_set.csv") #do i need to create new file folders here, where does csv go?
-val_csv = os.path.join(data_path, "val_set.csv") #make one for each location: classroom, livingroom, etc
+train_csv = os.path.join(data_path, "train_set.csv")
+val_csv = os.path.join(data_path, "val_set.csv")
 test_csv = os.path.join(data_path, "test_set.csv")
 
 # I open output CSV files and write headers for each split.
