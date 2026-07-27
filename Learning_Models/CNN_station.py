@@ -119,7 +119,7 @@ if __name__ == "__main__":
     )
 
     checkpoint = ModelCheckpoint(model_dir, verbose=1, save_best_only=True)
-    earlystopping = EarlyStopping(monitor="val_loss", min_delta=0.001, patience=10, verbose=1) # change to 0.001 for overfitting
+   # earlystopping = EarlyStopping(monitor="val_loss", min_delta=0.001, patience=10, verbose=1) # change to 0.001 for overfitting
 
     # I compile and train the model.
     model.compile(
@@ -140,7 +140,7 @@ if __name__ == "__main__":
         x=train_gen,
         epochs=100,
         validation_data=val_gen,
-        callbacks=[learning_rate_reduction, checkpoint, earlystopping, tensorboard],
+        callbacks=[learning_rate_reduction, checkpoint, tensorboard], #include earlystopping when putting back
         verbose=1,
     )
 

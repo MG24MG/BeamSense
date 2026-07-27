@@ -79,7 +79,7 @@ class DataGenerator(keras.utils.Sequence):
                 arr = load_npy(path)
             except Exception:
                 continue
-            self.cache[path] = arr
+            self.cache[path] = arr / np.abs(np.max(arr))
             label = parse_label(path)
             T = arr.shape[0]
             if T < self.windowsize:
