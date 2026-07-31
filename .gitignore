@@ -2,3 +2,6 @@
 Data/*
 .DS_Store
 *.pdf
+Learning_Models/raw_vs_normalized_plots_c/*
+Learning_Models/raw_vs_normalized_plots_k/*
+Learning_Models/raw_vs_normalized_plots_L/*

@@ -1,34 +1,29 @@
-import argparse
+"""
+plot_raw_vs_normalized_lines.py
+
+Plots raw vs. normalized line graphs for EVERY file listed in the csv below,
+using the actual normalization equation from dataGenerator_CNN.py:
+    arr / np.abs(np.max(arr))
+
+Just hit Run in PyCharm -- no configuration/arguments needed.
+Edit CSV_PATH below to point at your train/val/test csv.
+"""
 import os
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from dataGenerator_CNN import load_npy, normalize_arr, compute_channel_stats
+from dataGenerator_CNN import load_npy, normalize_arr, parse_label
 
+CSV_PATH = "/home/maria/Documents/BeamSense/Data/BFI/New_Processed/Livingroom/train_set.csv"
+OUTPUT_DIR = "raw_vs_normalized_plots_L"
 
-def parse_args():
-    p = argparse.ArgumentParser()
-    p.add_argument("csv", help="train_set.csv (used both to compute stats and pick the file)")
-    p.add_argument("--index", type=int, default=0, help="which row of the csv to plot")
-    return p.parse_args()
-
-
-def main():
-    args = parse_args()
-    df = pd.read_csv(args.csv)
-    path = df["filename"].iloc[args.index]
-
-    # channel stats computed from the whole training csv, same as train_gen would do
-    channel_mean, channel_std = compute_channel_stats(df["filename"])
-
+def plot_one_file(path, out_dir):
     raw = load_npy(path)
-    norm = normalize_arr(raw, channel_mean, channel_std)
-
-    print(f"File: {os.path.basename(path)}")
-    print(f"RAW        min={raw.min():.4f} max={raw.max():.4f} mean={raw.mean():.4f} std={raw.std():.4f}")
-    print(f"NORMALIZED min={norm.min():.4f} max={norm.max():.4f} mean={norm.mean():.4f} std={norm.std():.4f}")
+    norm = normalize_arr(raw)
+    label = parse_label(path) #+ 1?
+    name = os.path.basename(path)
 
     n_channels = raw.shape[-1]
     time_steps = np.arange(raw.shape[0])
@@ -44,16 +39,36 @@ def main():
 
     for c in range(n_channels):
         axes[1].plot(time_steps, norm[:, :, c].mean(axis=1), label=f"channel {c}")
-    axes[1].set_title("Normalized values (after z-score)")
+    axes[1].set_title("Normalized values (arr / |max(arr)|)")
     axes[1].set_xlabel("time step")
     axes[1].legend()
 
-    plt.suptitle(os.path.basename(path))
+    plt.suptitle(f"{name}  (label {label})")
     plt.tight_layout()
-    plt.savefig("raw_vs_normalized_line_graph.png", dpi=200)
-    print("Saved raw_vs_normalized_line_graph.png")
-    plt.show()
+
+    out_path = os.path.join(out_dir, f"{os.path.splitext(name)[0]}.png")
+    plt.savefig(out_path, dpi=150)
+    plt.close(fig)  # close instead of show, since we're doing many files
+    return out_path
+
+
+def main():
+    df = pd.read_csv(CSV_PATH)
+    paths = df["filename"].tolist()
+
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+    print(f"Plotting {len(paths)} files from {CSV_PATH}")
+    for i, path in enumerate(paths):
+        try:
+            out_path = plot_one_file(path, OUTPUT_DIR)
+            print(f"[{i + 1}/{len(paths)}] saved {out_path}")
+        except Exception as e:
+            print(f"[{i + 1}/{len(paths)}] FAILED on {path}: {e}")
+
+    print(f"\nDone. All plots saved under: {os.path.abspath(OUTPUT_DIR)}")
 
 
 if __name__ == "__main__":
     main()
+

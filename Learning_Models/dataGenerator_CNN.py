@@ -21,7 +21,6 @@ import os
 # I keep the default temporal window size used by the data generator.
 window_size = 10
 
-
 def load_npy(path):
     # I load a single .npy capture and normalize it to a (time, 234, 4) array.
     angle_data = np.load(path, allow_pickle=True)
@@ -29,12 +28,16 @@ def load_npy(path):
         angle_data = np.squeeze(angle_data[0, :, :, :])
     return angle_data.astype(np.float32)
 
+def normalize_arr(arr):
+    """Per-file max-abs scaling: divides the whole array by the absolute
+    value of its own max. Scales values to roughly [-1, 1] (or [0, 1] if
+    all values are non-negative)."""
+    return arr / np.abs(np.max(arr))
 
 def parse_label(path):
     # I parse the angle class (A_01..A_20) from the basename and make it 0-indexed.
     base = os.path.basename(path)
     return int(base.split("_")[3]) - 1
-
 
 class DataGenerator(keras.utils.Sequence):
     """Data generator that yields sliding windows over each capture."""
@@ -79,7 +82,7 @@ class DataGenerator(keras.utils.Sequence):
                 arr = load_npy(path)
             except Exception:
                 continue
-            self.cache[path] = arr / np.abs(np.max(arr))
+            self.cache[path] = normalize_arr(arr)
             label = parse_label(path)
             T = arr.shape[0]
             if T < self.windowsize:

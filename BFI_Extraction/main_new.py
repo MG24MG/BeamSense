@@ -48,7 +48,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Set variables based on command-line arguments
-    root_dir = args.root_dir #new
+    root_dir = args.root_dir
     pcapng_files = Path(root_dir).rglob("*.pcapng")
     standard = args.standard
     mimo = args.mimo
@@ -105,20 +105,26 @@ if __name__ == '__main__':
         else:
             print("input a valid bandwidth for IEEE 802.11ac")
 
+    #loops through all the files to be processed in one folder
     for file in pcapng_files:
+
+        #sets where the processed data will be saved
         out_base = str(file).replace("Raw", "New_Processed")
         file_path = Path(out_base)
 
+        #splits the parts of the original file name to organize it into a new folder
         env = file_path.parts[-4]
         station = file_path.parts[-3]
         mode = file_path.parts[-2]
 
         base = "/home/maria/Documents/BeamSense/Data/BFI/New_Processed/" + station + "/"
 
+        #requires three subfolders to split data into: train, val, and test
         file_base_train = base + "train/" + f"{file_path.stem}_{station}_angles.npy"
         file_base_val = base + "val/" + f"{file_path.stem}_{station}_angles.npy"
         file_base_test = base + "test/" + f"{file_path.stem}_{station}_angles.npy"
 
+        #checks if file already processed, skips if it is
         if os.path.exists(file_base_train) and os.path.exists(file_base_val) and os.path.exists(file_base_test):
             print(f"SKIPPING, already processed: {file_path}")
             continue
@@ -146,19 +152,15 @@ if __name__ == '__main__':
                 include_raw=True
             )._packets_from_tshark_sync()
 
-        # Initialize lists to store feedback angles within three places
-        # train_angles = []
-        # val_angles = []
-        # test_angles = []
         all_angles = []
 
-        # Process each packet
+        # Process each packet, first checks if there is MU data. If not, --> checks for SU data
         for p in range(num_packet_to_process):
             try:
-                packet = packets_MU.__next__().frame_raw.value #problem here, goes to line 70 in tshark.py
+                packet = packets_MU.__next__().frame_raw.value
             except:
                 try:
-                    packet = packets_SU.__next__().frame_raw.value  # problem here, goes to line 70 in tshark.py
+                    packet = packets_SU.__next__().frame_raw.value
                 finally:
                     break
             print('packet___________ ' + str(p) + '\n\n\n')
@@ -274,7 +276,6 @@ if __name__ == '__main__':
             length_angles_users_bits = NSUBC_VALID * tot_bits_users
             length_angles_users = math.floor(length_angles_users_bits / 8)
 
-
             # Extract specific fields for AX or AC standard
             if standard == "AX":
                 Feedback_angles = packet[(i + 62 + 2*int(config[-1])):(len(packet) - 8)]
@@ -296,6 +297,7 @@ if __name__ == '__main__':
 
             Feed_back_angles_bin_chunk = np.array(wrap(Feedback_angles_bin[:(tot_bits_users * NSUBC_VALID)], tot_bits_users))
 
+            #checks to make sure enough subcarrier chunks in each packet, otherwise will skip it so file doesn't break
             if len(Feed_back_angles_bin_chunk) != NSUBC_VALID:
                 print(f"SKIPPING packet {p}: expected {NSUBC_VALID} subcarrier chunks, got {len(Feed_back_angles_bin_chunk)}")
                 check = True
@@ -306,6 +308,7 @@ if __name__ == '__main__':
 
             all_angles.append(angle)
 
+        #after all angles appended, 70% get separated into train, 20% into val, and the rest into test
         num_all_angles = len(all_angles)
         train_split = int(np.floor(num_all_angles * 0.7))
         val_split = int(np.floor(num_all_angles * 0.2))
@@ -314,19 +317,13 @@ if __name__ == '__main__':
         val_angles = all_angles[train_split:train_split+val_split]
         test_angles = all_angles[train_split+val_split:num_all_angles]
 
-        # rand = np.random.rand(1)
-        # if rand < 0.7:
-        #     train_angles.append(angle)
-        # elif rand < 0.85:
-        #     val_angles.append(angle)
-        # else:
-        #     test_angles.append(angle)
-
+        #if not enough packets for a file, will not save it
         if check == True:
             print(f"SKIPPING save:  incomplete packets for {file_path}")
             check = False
             continue
 
+        #saves each processed file to either train, val, or test within the station folder
         np.save(file_base_train, train_angles)
         np.save(file_base_val, val_angles)
         np.save(file_base_test, test_angles)

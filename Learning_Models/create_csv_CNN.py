@@ -17,12 +17,9 @@ import numpy as np
 import os
 import csv
 
-# I set the dataset location for the station/scenario I want to process.
-# instead, have it be, where you just input location, and based on that it goes to that file section in New_processd and goes through all three train, val, test
+# Set the station, will go through train, val, and test subfolders within station's folder
 Test = "Livingroom"
 
-# I fix the random seed so the train/val/test split stays reproducible.
-np.random.seed(111)
 data_pa = "/home/maria/Documents/BeamSense/Data/BFI/New_Processed"
 
 data_path = os.path.join(data_pa, Test)
@@ -43,6 +40,7 @@ writer_val.writeheader()
 writer_test = csv.DictWriter(test_csv, fieldnames=fieldnames)
 writer_test.writeheader()
 
+#sorts files within each csv based on label number
 for split, writer in [("train", writer_train), ("val", writer_val), ("test", writer_test)]:
     split_path = os.path.join(data_path, split)
     for root, dirs, files in os.walk(split_path):

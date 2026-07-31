@@ -14,7 +14,6 @@
 """
 
 import argparse
-
 import tensorboard
 
 # I keep a single window-size constant so the model input size stays consistent.
@@ -119,7 +118,9 @@ if __name__ == "__main__":
     )
 
     checkpoint = ModelCheckpoint(model_dir, verbose=1, save_best_only=True)
-   # earlystopping = EarlyStopping(monitor="val_loss", min_delta=0.001, patience=10, verbose=1) # change to 0.001 for overfitting
+
+    #can add early stopping if desired, uncomment line 123
+    #earlystopping = EarlyStopping(monitor="val_loss", min_delta=0.001, patience=10, verbose=1)
 
     # I compile and train the model.
     model.compile(
@@ -140,20 +141,18 @@ if __name__ == "__main__":
         x=train_gen,
         epochs=100,
         validation_data=val_gen,
-        callbacks=[learning_rate_reduction, checkpoint, tensorboard], #include earlystopping when putting back
+        callbacks=[learning_rate_reduction, checkpoint, tensorboard], #include earlystopping if adding that feature
         verbose=1,
     )
 
-
-
     from matplotlib import pyplot as plt
 
+    # I plot and save training/validation loss over epochs.
     plt.plot(history.history["loss"], label="Training loss")
     plt.plot(history.history["val_loss"], label="Validation loss")
     plt.legend()
     plt.savefig(os.path.join(data_path, Test, data_proc, "train_val_loss.png"),dpi=300)
     plt.show()
-
 
     # I plot and save training/validation accuracy over epochs.
     plt.plot(history.history["accuracy"], label="Training acc")
@@ -201,5 +200,6 @@ if __name__ == "__main__":
     )
     ax.set_ylabel("Actual", fontsize=20)
     ax.set_xlabel("Predicted", fontsize=20)
+
     # I save the normalized confusion matrix for this run.
     plt.savefig(os.path.join(data_path, Test, data_proc, "confusion_matrix.png"), dpi=300)
