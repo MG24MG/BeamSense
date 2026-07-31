@@ -1,12 +1,7 @@
 """
-plot_raw_vs_normalized_lines.py
-
-Plots raw vs. normalized line graphs for EVERY file listed in the csv below,
+Plots raw vs. normalized line graphs for every file listed in the csv below,
 using the actual normalization equation from dataGenerator_CNN.py:
     arr / np.abs(np.max(arr))
-
-Just hit Run in PyCharm -- no configuration/arguments needed.
-Edit CSV_PATH below to point at your train/val/test csv.
 """
 import os
 
@@ -16,6 +11,7 @@ import matplotlib.pyplot as plt
 
 from dataGenerator_CNN import load_npy, normalize_arr, parse_label
 
+#the CSV path it takes the data before normalization to be plotted from
 CSV_PATH = "/home/maria/Documents/BeamSense/Data/BFI/New_Processed/Livingroom/train_set.csv"
 OUTPUT_DIR = "raw_vs_normalized_plots_L"
 
@@ -58,6 +54,7 @@ def main():
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
+    #prints current plotting progress, and if any are skipped due to error
     print(f"Plotting {len(paths)} files from {CSV_PATH}")
     for i, path in enumerate(paths):
         try:
@@ -66,9 +63,8 @@ def main():
         except Exception as e:
             print(f"[{i + 1}/{len(paths)}] FAILED on {path}: {e}")
 
-    print(f"\nDone. All plots saved under: {os.path.abspath(OUTPUT_DIR)}")
+    print(f"\nCompleted. All plots saved under: {os.path.abspath(OUTPUT_DIR)}")
 
 
 if __name__ == "__main__":
     main()
-
