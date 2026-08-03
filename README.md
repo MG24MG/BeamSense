@@ -1,6 +1,6 @@
 # BeamSense: Rethinking Wireless Sensing with MU-MIMO Wi-Fi Beamforming Feedback
 
-## Maria version
+## Python Version
 
 ###### This is the implementation of the paper [BeamSense: Rethinking Wireless Sensing with MU-MIMO Wi-Fi Beamforming Feedback](https://doi.org/10.1016/j.comnet.2024.111020). The repository shares both the datasets and the source code of **BeamSense.**
 
@@ -54,16 +54,6 @@ and
 
 (IV) Unzip the downloaded file with ``` sudo unzip Data.zip ``` <br/>
 
-## Extract CSI from Raw pcap Files
-
-(I) First, move into the directory _CSI_Extraction_ with ``` cd CSI_Extraction ``` <br/>
-
-(II) Execute the matlab script _Extract_CSI.m_ with  ``` matlab -nojvm -nosplash -r "Extract_CSI; exit" ``` <br/>
-
-(III) Now split the extracted CSI to samples ( with a time window of 0.1s ) by executing _CSI_to_batches.m_ script with ``` matlab -nojvm -nosplash -r "CSI_to_batches; exit" ``` <br/>
-
-**You can go with a different time window size also. But remember to keep it the same for BFI as well**
-
 
 ## Extract BFI from Raw pcap Files
 
@@ -75,8 +65,22 @@ Now, export the Wireshark packet Dissections as CSV (needed for time windowing).
 
 (III) Next, move into the directory _BFI_Extraction_ with ``` cd BeamSense/BFI_Extraction/ ``` <br/>
 
-(IV) Execute the matlab script _pcap_to_bfa.m_ with  ``` matlab -nojvm -nosplash -r "pcap_to_bfa; exit" ``` to extract the beamforming feedback angles (BFAs) <br/>
+(IV) Ensure at minimum the following scripts are in the folder: _bfi_angles.py_, _main_new.py_, _utils.py_, and _vmatrices.py_ <br/>
 
-(V) Now split the extracted BFAs to samples ( with a time window of 0.1s -- around 10 BFI packets ) by executing _bfa_to_batches.m_ script with ``` matlab -nojvm -nosplash -r "bfa_to_batches; exit" ```
+(V) Execute the python script _main_new.py_ with the following configuration to extract the beamforming feedback angles (BFAs): ```BeamSense/Data/BFI/Raw AC SU 3x1 80 <'Receiver Address'> 1000 ```  <br/>
 
+(VI) Execute the script three times to ensure all data is processed, with one of three receiver addresses each time: ```b0:b9:8a:63:55:9c```, ```38:94:ED:12:3C:25```, and ```CC:40:D0:57:EA:89``` <br/>
 
+(VII) To see the data plotted, you may run _plot.py_ for frequency over time as a line graph, or _heatmap.py_ for a heatmap
+
+## Creating the Learning Models
+
+(I) At this point within the processed data environment folders, each one should have three subfolders: train, val, and test. <br/>
+
+(II) Within Learning_Models, run the python script _create_csv_CNN.py_ to create three CSV files within each station's folder <br/>
+
+(III) Next, run _CNN_station.py_ with the following configuration, once for each environment: ```<'Environment'> skip <'Model Name'>.keras``` <br/>
+
+(IV) If you would like to add early stopping to the learning modelo process, follow the instructions in the comments of _CNN_station.py_ <br/>
+
+(V) To plot the normalized values compared to the original processed ones, run the python script _plottingNormalization.py_ <br/>
