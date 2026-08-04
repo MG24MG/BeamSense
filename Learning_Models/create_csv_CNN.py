@@ -20,7 +20,7 @@ import csv
 # Set the station, will go through train, val, and test subfolders within station's folder
 Test = "Livingroom"
 
-data_pa = "/home/maria/Documents/BeamSense/Data/BFI/New_Processed"
+data_pa = "/home/Documents/BeamSense/Data/BFI/New_Processed"
 
 data_path = os.path.join(data_pa, Test)
 

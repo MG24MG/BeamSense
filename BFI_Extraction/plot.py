@@ -5,10 +5,10 @@ import glob
 from pathlib import Path
 
 #where finds the file to be plotted
-files = sorted(glob.glob("/home/maria/Documents/BeamSense/Data/BFI/Processed/Livingroom/Shahriar/*_vmatrices.npy"))
+files = sorted(glob.glob("/home/Documents/BeamSense/Data/BFI/Processed/Livingroom/Shahriar/*_vmatrices.npy"))
 
 #where the plots will be saved
-output_dir = Path("/home/maria/Documents/BeamSense/Data/BFI/Plots")
+output_dir = Path("/home/Documents/BeamSense/Data/BFI/Plots")
 output_dir.mkdir(parents=True, exist_ok=True)
 
 for file in files:

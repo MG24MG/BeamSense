@@ -82,7 +82,7 @@ if __name__ == "__main__":
     import os
 
     # I define dataset and output locations based on the selected test/station setup.
-    data_path = "/home/maria/Documents/BeamSense/Data/BFI/New_Processed"
+    data_path = "/home/Documents/BeamSense/Data/BFI/New_Processed"
     data_proc = "Model"
 
     model_dir = os.path.join(data_path, Test, data_proc, model_save)
