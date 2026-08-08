@@ -29,18 +29,35 @@ def load_npy(path):
     return angle_data.astype(np.float32)
 
 def normalize_arr(arr):
-    """Per-file max-abs scaling: divides the whole array by the absolute
-    value of its own max. Scales values to roughly [-1, 1] (or [0, 1] if
-    all values are non-negative)."""
-    return arr / np.abs(np.max(arr))
+    """Per-file max-abs scaling: divides the whole array by the largest
+    absolute value it contains. Scales values to [-1, 1] (or [0, 1] if all
+    values are non-negative) regardless of the sign of the peak."""
+    return arr / np.max(np.abs(arr))
 
 def parse_label(path):
     # I parse the angle class (A_01..A_20) from the basename and make it 0-indexed.
     base = os.path.basename(path)
     return int(base.split("_")[3]) - 1
 
+def _read_csvs(dataset_csv):
+    """Reads a single csv path or a list of csv paths and concatenates them.
+
+    This is what lets us pool multiple stations (classroom/kitchen/livingroom)
+    into a single training set: pass a list of the per-station train_set.csv
+    paths and they get combined into one dataframe of filenames+labels before
+    any windows get enumerated.
+    """
+    if isinstance(dataset_csv, (list, tuple)):
+        frames = [pd.read_csv(c) for c in dataset_csv]
+        return pd.concat(frames, ignore_index=True)
+    return pd.read_csv(dataset_csv)
+
 class DataGenerator(keras.utils.Sequence):
-    """Data generator that yields sliding windows over each capture."""
+    """Data generator that yields sliding windows over each capture.
+
+    dataset_csv can be a single csv path (original behavior, one station) or
+    a list of csv paths (combines multiple stations into one pool of samples).
+    """
 
     def __init__(
         self,
@@ -56,12 +73,12 @@ class DataGenerator(keras.utils.Sequence):
         """Initialization
         param:
             dataset_path: the directory the .npy files live under
-            dataset_csv: the csv file listing files and labels
+            dataset_csv: csv path, OR list of csv paths, listing files and labels
             num_classes: number of classes
             chunk_shape: shape of one window (time x subcarriers x channels)
             window_stride: step (in time steps) between consecutive windows
         """
-        df = pd.read_csv(dataset_csv)
+        df = _read_csvs(dataset_csv)
         self.dataset_path = dataset_path
         self.batchsize = batchsize
         self.num_classes = num_classes
